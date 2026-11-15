@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Vidonia – AI Video Enhancer for TikTok & Phone Videos</title>
+  <meta name="description" content="Vidonia sharpens and cleans blurry TikTok and phone videos. Recommended mode is stable; Aggressive mode pushes clarity further. Free, no sign-up required.">
+  <meta name="keywords" content="video enhancer, TikTok video quality, sharpen video, improve video quality, free video enhancer">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="Vidonia – AI Video Enhancer">
+  <meta property="og:description" content="Make your TikTok and phone videos clearer. Free, with before & after.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='14' fill='%23ff2d55'/%3E%3Cpath d='M19 15L35 24L19 33Z' fill='%23fff'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --bg: #06060a; --bg-2: #0c0c13;
+      --glass: rgba(255,255,255,0.035); --glass-2: rgba(255,255,255,0.065);
+      --line: rgba(255,255,255,0.08); --line-2: rgba(255,255,255,0.15);
+      --text: #f5f5fa; --muted: #9b9bb3;
+      --red: #ff2d55; --red-2: #e11d48; --orange: #ff7a59; --violet: #8b5cf6; --cyan: #22d3ee;
+      --ok: #34d399; --danger: #ff6b81; --warn: #fbbf24;
+      --shadow: 0 50px 110px -40px rgba(0,0,0,0.95);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 96px; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--text); overflow-x: hidden; line-height: 1.6;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg); -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    button { font: inherit; }
+    [hidden] { display: none !important; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 2; }
+
+    /* ===== Animated background ===== */
+    .bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+    .orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .55; animation: float 18s ease-in-out infinite; }
+    .orb.a { width: 520px; height: 520px; background: #ff2d55; top: -160px; left: -120px; }
+    .orb.b { width: 460px; height: 460px; background: #8b5cf6; top: 30%; right: -160px; animation-delay: -6s; }
+    .orb.c { width: 380px; height: 380px; background: #ff7a59; bottom: -120px; left: 30%; animation-delay: -11s; opacity: .35; }
+    @keyframes float {
+      0%, 100% { transform: translate(0,0) scale(1); }
+      33% { transform: translate(40px,-30px) scale(1.06); }
+      66% { transform: translate(-30px,40px) scale(0.95); }
+    }
+    .grid-lines {
+      position: absolute; inset: 0; opacity: .25;
+      background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 56px 56px; mask-image: radial-gradient(ellipse at top, #000 15%, transparent 70%);
+      animation: drift 30s linear infinite;
+    }
+    @keyframes drift { to { background-position: 56px 56px; } }
+
+    /* ===== Nav ===== */
+    .nav {
+      position: sticky; top: 0; z-index: 60;
+      background: rgba(6,6,10,0.55); backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 72px; position: relative; gap: 12px; }
+    .brand { display: flex; align-items: center; text-decoration: none; }
+    .brand { gap: 10px; color: var(--text); }
+    .brand .mark { display: block; transition: transform .4s; }
+    .brand:hover .mark { transform: scale(1.06) rotate(-3deg); }
+    .wordmark { font-weight: 800; font-size: 1.3rem; letter-spacing: -0.03em; background: linear-gradient(100deg, #fff, #ffd6df); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .menu { display: flex; align-items: center; gap: 4px; list-style: none; margin: 0; padding: 0; }
+    .menu a {
+      display: block; padding: 9px 15px; border-radius: 999px; text-decoration: none;
+      color: var(--muted); font-size: 0.93rem; font-weight: 500; transition: color .2s, background .2s;
+    }
+    .menu a:hover, .menu a.active { color: var(--text); background: var(--glass-2); }
+    .menu .cta { background: linear-gradient(135deg, var(--red), var(--orange)); color: #fff; font-weight: 600; margin-left: 6px; box-shadow: 0 10px 30px -10px rgba(255,45,85,.7); }
+    .menu .cta:hover { color: #fff; filter: brightness(1.08); background: linear-gradient(135deg, var(--red), var(--orange)); }
+    .signin {
+      display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 999px; cursor: pointer;
+      background: #fff; color: #1f1f1f; border: none; font-weight: 600; font-size: 0.88rem; white-space: nowrap;
+      transition: transform .15s, box-shadow .2s;
+    }
+    .signin:hover { transform: translateY(-1px); box-shadow: 0 10px 26px -10px rgba(255,255,255,.5); }
+    .me { display: flex; align-items: center; gap: 8px; }
+    .avatar {
+      width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--red), var(--violet));
+      display: grid; place-items: center; font-weight: 800; font-size: .85rem; color: #fff; text-transform: uppercase;
+    }
+    .signout { background: transparent; border: 1px solid var(--line-2); color: var(--muted); padding: 7px 12px; border-radius: 999px; font-size: .8rem; cursor: pointer; }
+    .signout:hover { color: var(--text); border-color: var(--red); }
+    .burger {
+      display: none; background: var(--glass-2); border: 1px solid var(--line-2); color: var(--text);
+      width: 44px; height: 44px; border-radius: 12px; font-size: 1.1rem; cursor: pointer; align-items: center; justify-content: center;
+    }
+    @media (max-width: 880px) {
+      .burger { display: inline-flex; }
+      .menu {
+        position: absolute; top: 72px; left: -24px; right: -24px; flex-direction: column; align-items: stretch;
+        background: rgba(12,12,19,0.98); border-bottom: 1px solid var(--line); padding: 12px 24px 18px; gap: 4px;
+        transform: translateY(-10px); opacity: 0; pointer-events: none; transition: .25s ease;
+      }
+      .menu.open { transform: none; opacity: 1; pointer-events: auto; }
+      .menu .cta { margin: 8px 0 0; text-align: center; }
+    }
+
+    /* ===== Hero ===== */
+    .hero { text-align: center; padding: 92px 0 40px; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 9px; font-size: .82rem; font-weight: 600; color: #ffc4d1;
+      background: rgba(255,45,85,.1); border: 1px solid rgba(255,45,85,.3); padding: 7px 15px; border-radius: 999px; margin-bottom: 26px;
+      animation: fadeUp .8s both;
+    }
+    .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 0 var(--red); animation: pulse 1.8s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,45,85,.7); } 70% { box-shadow: 0 0 0 10px rgba(255,45,85,0); } 100% { box-shadow: 0 0 0 0 rgba(255,45,85,0); } }
+    .hero h1 {
+      font-size: clamp(2.6rem, 6.8vw, 5rem); line-height: 1.02; margin: 0 0 22px; letter-spacing: -0.05em; font-weight: 800;
+      animation: fadeUp .9s .1s both;
+    }
+    .grad {
+      background: linear-gradient(100deg, #ff9bb0, #ff2d55, #ff7a59, #ffd6a5, #ff9bb0);
+      background-size: 240% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+      animation: gradMove 6s linear infinite;
+    }
+    @keyframes gradMove { to { background-position: -240% 0; } }
+    .hero p { color: var(--muted); max-width: 640px; margin: 0 auto; font-size: 1.14rem; animation: fadeUp .9s .2s both; }
+    .cta-row { margin-top: 34px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; animation: fadeUp .9s .3s both; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px; padding: 15px 26px; border-radius: 15px; font-weight: 700; text-decoration: none;
+      border: 1px solid var(--line-2); background: var(--glass-2); color: var(--text); cursor: pointer; transition: transform .2s, box-shadow .3s, filter .2s;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn.primary {
+      background: linear-gradient(135deg, var(--red), var(--orange)); border-color: transparent; color: #fff;
+      box-shadow: 0 18px 44px -14px rgba(255,45,85,.9);
+    }
+    .btn.primary:hover { box-shadow: 0 24px 56px -14px rgba(255,45,85,1); }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+    /* ===== Tool ===== */
+    .tool {
+      position: relative; margin-top: 30px; padding: 32px; border-radius: 30px;
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+      border: 1px solid var(--line-2); box-shadow: var(--shadow); backdrop-filter: blur(14px);
+      animation: fadeUp 1s .35s both;
+    }
+    .tool::before {
+      content: ""; position: absolute; inset: -1px; border-radius: 30px; padding: 1.5px; pointer-events: none;
+      background: conic-gradient(from var(--angle, 0deg), var(--red), var(--orange), var(--violet), var(--red));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+      opacity: .6; animation: spin 6s linear infinite;
+    }
+    @property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+    @keyframes spin { to { --angle: 360deg; } }
+
+    .steps-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 26px; }
+    .sb {
+      display: flex; align-items: center; gap: 11px; padding: 13px 15px; border-radius: 15px;
+      background: var(--glass); border: 1px solid var(--line); color: var(--muted); font-size: .9rem; font-weight: 600; transition: all .4s;
+    }
+    .sb .n {
+      width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; font-size: .85rem; font-weight: 800;
+      background: var(--glass-2); color: var(--muted); flex-shrink: 0; transition: all .4s;
+    }
+    .sb.active { color: var(--text); border-color: rgba(255,45,85,.45); background: rgba(255,45,85,.08); transform: translateY(-2px); }
+    .sb.active .n { background: linear-gradient(135deg, var(--red), var(--orange)); color: #fff; box-shadow: 0 8px 20px -6px var(--red); }
+    .sb.done .n { background: rgba(52,211,153,.2); color: var(--ok); }
+    @media (max-width: 680px) { .steps-bar { grid-template-columns: 1fr; } }
+
+    .notice { margin: 0 0 18px; padding: 13px 16px; border-radius: 14px; font-size: .92rem; background: rgba(52,211,153,.08); border: 1px solid rgba(52,211,153,.28); color: #bff5dc; animation: fadeUp .4s both; }
+    .notice.warn { background: rgba(251,191,36,.08); border-color: rgba(251,191,36,.3); color: #fde68a; }
+    .notice.error { background: rgba(255,107,129,.08); border-color: rgba(255,107,129,.32); color: #ffd1da; }
+
+    /* Drop */
+    .drop {
+      position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+      cursor: pointer; min-height: 250px; border-radius: 24px; padding: 34px 20px; overflow: hidden;
+      border: 1.5px dashed rgba(255,255,255,.18); background: rgba(255,255,255,.025); transition: border-color .3s, background .3s, transform .3s;
+    }
+    .drop::after {
+      content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 0%, rgba(255,45,85,.18), transparent 60%);
+      opacity: 0; transition: opacity .4s;
+    }
+    .drop:hover, .drop.dragover { border-color: var(--red); transform: scale(1.005); }
+    .drop:hover::after, .drop.dragover::after { opacity: 1; }
+    .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; z-index: 2; }
+    .drop .orb-ic {
+      width: 76px; height: 76px; border-radius: 24px; display: grid; place-items: center; font-size: 2rem; margin-bottom: 18px;
+      background: linear-gradient(135deg, rgba(255,45,85,.22), rgba(255,122,89,.12)); border: 1px solid rgba(255,45,85,.35);
+      box-shadow: 0 0 46px -10px rgba(255,45,85,.7); animation: bob 3.2s ease-in-out infinite;
+    }
+    @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+    .drop .title { font-weight: 700; font-size: 1.25rem; letter-spacing: -0.01em; position: relative; }
+    .drop .hint { color: var(--muted); font-size: .92rem; margin-top: 6px; position: relative; }
+    .chips { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; justify-content: center; position: relative; }
+    .chip { font-size: .75rem; color: var(--muted); border: 1px solid var(--line-2); padding: 5px 11px; border-radius: 999px; background: var(--glass); }
+
+    /* Video card */
+    .vcard { display: flex; align-items: center; gap: 16px; padding: 14px; border-radius: 18px; background: var(--glass); border: 1px solid var(--line-2); animation: fadeUp .5s both; }
+    .thumb { width: 140px; height: 80px; border-radius: 13px; object-fit: cover; background: #000; flex-shrink: 0; box-shadow: 0 12px 30px -12px #000; }
+    .vmeta { flex: 1; min-width: 0; }
+    .vmeta .name { font-weight: 700; word-break: break-all; }
+    .vmeta .info { color: var(--muted); font-size: .86rem; margin-top: 4px; }
+    .badge { font-size: .74rem; font-weight: 700; padding: 5px 11px; border-radius: 999px; background: rgba(52,211,153,.12); color: var(--ok); border: 1px solid rgba(52,211,153,.3); white-space: nowrap; }
+    .ghost { background: var(--glass-2); border: 1px solid var(--line-2); color: var(--text); padding: 9px 15px; border-radius: 12px; cursor: pointer; font-size: .88rem; font-weight: 600; white-space: nowrap; transition: border-color .2s; }
+    .ghost:hover { border-color: var(--red); }
+    @media (max-width: 560px) { .thumb { width: 96px; height: 56px; } .badge { display: none; } }
+
+    .sec-title { display: flex; align-items: center; gap: 11px; margin: 32px 0 6px; font-size: 1.2rem; font-weight: 700; letter-spacing: -0.01em; }
+    .sec-title .num { width: 31px; height: 31px; border-radius: 10px; display: grid; place-items: center; font-size: .9rem; font-weight: 800; color: #fff; background: linear-gradient(135deg, var(--red), var(--orange)); box-shadow: 0 8px 22px -8px var(--red); }
+    .sec-sub { color: var(--muted); font-size: .92rem; margin: 0 0 20px 42px; }
+
+    /* Mode cards */
+    .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 680px) { .modes { grid-template-columns: 1fr; } }
+    .mode { position: relative; cursor: pointer; display: block; }
+    .mode input { position: absolute; opacity: 0; pointer-events: none; }
+    .mode .box {
+      position: relative; height: 100%; display: flex; flex-direction: column; gap: 14px; padding: 22px; border-radius: 20px; overflow: hidden;
+      background: var(--glass); border: 1.5px solid var(--line); transition: transform .3s, border-color .3s, box-shadow .3s, background .3s;
+    }
+    .mode:hover .box { transform: translateY(-4px); border-color: var(--line-2); }
+    .mode input:checked + .box { border-color: var(--red); background: rgba(255,45,85,.07); box-shadow: 0 22px 50px -22px rgba(255,45,85,.8); }
+    .mode .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .m-ic { width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; font-size: 1.35rem; background: var(--glass-2); border: 1px solid var(--line-2); transition: all .3s; }
+    .mode input:checked + .box .m-ic { background: linear-gradient(135deg, var(--red), var(--orange)); border-color: transparent; transform: rotate(-6deg) scale(1.05); }
+    .mode.aggr input:checked + .box { border-color: var(--violet); background: rgba(139,92,246,.09); box-shadow: 0 22px 50px -22px rgba(139,92,246,.85); }
+    .mode.aggr input:checked + .box .m-ic { background: linear-gradient(135deg, var(--violet), var(--cyan)); }
+    .check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--line-2); display: grid; place-items: center; transition: all .25s; flex-shrink: 0; }
+    .mode input:checked + .box .check { background: var(--red); border-color: var(--red); }
+    .mode.aggr input:checked + .box .check { background: var(--violet); border-color: var(--violet); }
+    .mode input:checked + .box .check::after { content: "✓"; color: #fff; font-size: .8rem; font-weight: 800; }
+    .mode h3 { margin: 0; font-size: 1.12rem; font-weight: 700; letter-spacing: -0.01em; }
+    .mode p { margin: 0; color: var(--muted); font-size: .92rem; }
+    .mode ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 7px; font-size: .86rem; color: #c9c9da; }
+    .mode li::before { content: "→ "; color: var(--orange); font-weight: 700; }
+    .mode.aggr li::before { color: var(--cyan); }
+    .tag { font-size: .66rem; font-weight: 800; padding: 4px 9px; border-radius: 999px; background: var(--red); color: #fff; letter-spacing: .05em; }
+    .tag.warn { background: rgba(251,191,36,.15); color: var(--warn); border: 1px solid rgba(251,191,36,.35); }
+
+    /* Advanced trim */
+    details.adv { margin-top: 18px; background: var(--glass); border: 1px solid var(--line); border-radius: 16px; padding: 16px 20px; }
+    details.adv summary { cursor: pointer; font-weight: 700; list-style: none; display: flex; justify-content: space-between; color: var(--muted); font-size: .92rem; }
+    details.adv summary::-webkit-details-marker { display: none; }
+    details.adv summary::after { content: "+"; color: var(--orange); font-size: 1.2rem; }
+    details.adv[open] summary::after { content: "–"; }
+    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+    .field label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+    .field input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line-2); background: rgba(0,0,0,.35); color: var(--text); font: inherit; }
+    .field input:focus { outline: none; border-color: var(--red); box-shadow: 0 0 0 4px rgba(255,45,85,.15); }
+
+    /* Start */
+    .start-btn {
+      position: relative; width: 100%; margin-top: 22px; padding: 19px 24px; border: none; border-radius: 17px; cursor: pointer; overflow: hidden;
+      background: linear-gradient(135deg, var(--red), var(--orange)); color: #fff; font-size: 1.08rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: space-between; box-shadow: 0 22px 54px -18px rgba(255,45,85,.95); transition: transform .2s, filter .2s;
+    }
+    .start-btn::before {
+      content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+      background: linear-gradient(100deg, transparent, rgba(255,255,255,.35), transparent); transform: skewX(-18deg); animation: sheen 3.5s infinite;
+    }
+    @keyframes sheen { 0% { left: -60%; } 60%, 100% { left: 130%; } }
+    .start-btn:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.06); }
+    .start-btn:disabled { opacity: .45; cursor: not-allowed; }
+    .start-btn:disabled::before { display: none; }
+    .start-btn .arrow { font-size: 1.35rem; transition: transform .3s; }
+    .start-btn:hover:not(:disabled) .arrow { transform: translateX(5px); }
+
+    /* Progress */
+    .progress-wrap { display: none; margin-top: 22px; padding: 20px; border-radius: 18px; background: var(--glass); border: 1px solid var(--line-2); animation: fadeUp .4s both; }
+    .progress-top { display: flex; justify-content: space-between; font-size: .95rem; font-weight: 600; margin-bottom: 12px; gap: 10px; }
+    .progress-top span:last-child { color: var(--orange); }
+    .progress { height: 12px; background: rgba(255,255,255,.08); border-radius: 999px; overflow: hidden; position: relative; }
+    .progress-bar {
+      height: 100%; width: 0%; border-radius: 999px; position: relative; overflow: hidden;
+      background: linear-gradient(90deg, var(--red), var(--orange)); box-shadow: 0 0 22px rgba(255,45,85,.7); transition: width .4s ease;
+    }
+    .progress-bar::after {
+      content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.45) 50%, transparent 70%);
+      animation: shimmer 1.6s linear infinite;
+    }
+    @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+    .status { margin-top: 12px; color: var(--muted); font-size: .88rem; min-height: 1.3em; }
+    .status.error { color: var(--danger); }
+
+    /* Result */
+    .result { display: none; }
+    .ba {
+      position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 24px; overflow: hidden; cursor: pointer;
+      background: #000; border: 1px solid var(--line-2); user-select: none; box-shadow: 0 34px 70px -34px #000;
+    }
+    .ba video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
+    .ba .after { position: absolute; inset: 0; clip-path: inset(0 50% 0 0); pointer-events: none; transition: clip-path .05s linear; }
+    .ba .label {
+      position: absolute; top: 16px; font-size: .72rem; font-weight: 800; padding: 6px 12px; letter-spacing: .07em;
+      border-radius: 10px; background: rgba(0,0,0,.55); backdrop-filter: blur(6px); color: #fff; pointer-events: none;
+    }
+    .ba .label.l { left: 16px; } .ba .label.r { right: 16px; color: #ffd6df; }
+    .divider { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: #fff; transform: translateX(-1px); pointer-events: none; box-shadow: 0 0 16px rgba(255,255,255,.7); }
+    .divider::after {
+      content: "⇆"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 44px; height: 44px; border-radius: 50%; background: #fff; color: #111; display: grid; place-items: center; font-weight: 800; font-size: 1.15rem;
+      box-shadow: 0 12px 34px rgba(0,0,0,.55);
+    }
+    .playhint {
+      position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); background: rgba(0,0,0,.6); backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,.15); color: #fff; padding: 8px 16px; border-radius: 999px; font-size: .85rem; pointer-events: none;
+    }
+    .slider { width: 100%; margin: 18px 0 0; accent-color: var(--red); }
+
+    /* Quality boost card */
+    .boost {
+      margin-top: 18px; padding: 22px; border-radius: 20px; display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: center;
+      background: linear-gradient(135deg, rgba(255,45,85,.1), rgba(139,92,246,.08)); border: 1px solid rgba(255,45,85,.3);
+    }
+    .ring { width: 96px; height: 96px; position: relative; }
+    .ring svg { transform: rotate(-90deg); width: 96px; height: 96px; }
+    .ring circle { fill: none; stroke-width: 8; }
+    .ring .bgc { stroke: rgba(255,255,255,.08); }
+    .ring .fgc { stroke: url(#g); stroke-linecap: round; transition: stroke-dashoffset 1.4s ease; }
+    .ring .val { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 800; font-size: 1.2rem; }
+    .boost h3 { margin: 0 0 6px; font-size: 1.15rem; }
+    .boost p { margin: 0; color: var(--muted); font-size: .93rem; }
+    .bars { display: grid; gap: 10px; margin-top: 12px; }
+    .bar-row { display: grid; grid-template-columns: 70px 1fr 56px; gap: 10px; align-items: center; font-size: .82rem; color: var(--muted); }
+    .bar-track { height: 8px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
+    .bar-fill { height: 100%; width: 0; border-radius: 999px; transition: width 1.2s cubic-bezier(.2,.8,.2,1); }
+    .bar-fill.b { background: #6b7280; }
+    .bar-fill.a { background: linear-gradient(90deg, var(--red), var(--orange)); box-shadow: 0 0 12px rgba(255,45,85,.6); }
+    @media (max-width: 620px) { .boost { grid-template-columns: 1fr; text-align: center; justify-items: center; } .bar-row { grid-template-columns: 60px 1fr 50px; } }
+
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+    @media (max-width: 640px) { .stats { grid-template-columns: 1fr; } }
+    .stat { background: var(--glass); border: 1px solid var(--line); border-radius: 15px; padding: 14px 16px; }
+    .stat .k { color: var(--muted); font-size: .76rem; text-transform: uppercase; letter-spacing: .09em; font-weight: 700; }
+    .stat .v { font-weight: 800; font-size: 1.05rem; margin-top: 4px; }
+    .dl {
+      display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 18px; padding: 18px; border-radius: 17px;
+      background: linear-gradient(135deg, #34d399, #10b981); color: #03261a; font-weight: 800; font-size: 1.05rem; text-decoration: none;
+      box-shadow: 0 22px 46px -18px rgba(52,211,153,.85); transition: transform .2s, filter .2s;
+    }
+    .dl:hover { transform: translateY(-2px); filter: brightness(1.05); }
+    .again { display: block; width: 100%; margin-top: 12px; padding: 14px; border-radius: 15px; background: transparent; border: 1px solid var(--line-2); color: var(--text); font-weight: 600; cursor: pointer; }
+    .again:hover { background: var(--glass-2); }
+
+    /* ===== Sections ===== */
+    section.block { margin-top: 120px; }
+    .eyebrow2 { color: var(--orange); font-size: .8rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; text-align: center; }
+    .section-head { text-align: center; margin-bottom: 44px; }
+    .section-head h2 { font-size: clamp(2.1rem, 4.6vw, 3.2rem); margin: 12px 0 14px; letter-spacing: -0.04em; line-height: 1.08; }
+    .section-head p { color: var(--muted); margin: 0 auto; max-width: 600px; font-size: 1.06rem; }
+    .how-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    @media (max-width: 880px) { .how-grid { grid-template-columns: 1fr; } }
+    .hcard {
+      position: relative; padding: 32px 28px; border-radius: 24px; background: var(--glass); border: 1px solid var(--line); overflow: hidden;
+      transition: transform .35s, border-color .35s, background .35s;
+    }
+    .hcard::before {
+      content: ""; position: absolute; width: 200px; height: 200px; right: -80px; top: -80px; border-radius: 50%;
+      background: radial-gradient(rgba(255,45,85,.35), transparent 70%); opacity: 0; transition: opacity .4s;
+    }
+    .hcard:hover { transform: translateY(-6px); border-color: rgba(255,45,85,.35); background: var(--glass-2); }
+    .hcard:hover::before { opacity: 1; }
+    .hcard .big { font-size: 3.4rem; font-weight: 800; letter-spacing: -0.06em; line-height: 1; background: linear-gradient(180deg, #fff, rgba(255,255,255,.12)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .hcard h3 { margin: 18px 0 8px; font-size: 1.22rem; letter-spacing: -0.01em; }
+    .hcard p { margin: 0; color: var(--muted); font-size: .97rem; }
+
+    .feat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+    @media (max-width: 720px) { .feat-grid { grid-template-columns: 1fr; } }
+    .feat { display: flex; gap: 18px; padding: 28px; border-radius: 24px; background: var(--glass); border: 1px solid var(--line); transition: transform .3s, border-color .3s; }
+    .feat:hover { transform: translateY(-3px); border-color: var(--line-2); }
+    .feat .fi { width: 54px; height: 54px; border-radius: 17px; display: grid; place-items: center; font-size: 1.5rem; flex-shrink: 0; background: linear-gradient(135deg, rgba(255,45,85,.2), rgba(255,122,89,.1)); border: 1px solid rgba(255,45,85,.28); }
+    .feat h3 { margin: 2px 0 6px; font-size: 1.1rem; letter-spacing: -0.01em; }
+    .feat p { margin: 0; color: var(--muted); font-size: .96rem; }
+
+    .honest { margin-top: 24px; padding: 22px 24px; border-radius: 22px; font-size: .97rem; color: #ffe1e8; background: linear-gradient(135deg, rgba(255,45,85,.1), rgba(255,122,89,.05)); border: 1px solid rgba(255,45,85,.3); }
+    .honest strong { color: #fff; }
+
+    details.faq {
+      background: var(--glass); border: 1px solid var(--line); border-radius: 18px; padding: 20px 24px; margin-top: 12px; transition: border-color .25s, background .25s;
+    }
+    details.faq[open] { border-color: rgba(255,45,85,.35); background: var(--glass-2); }
+    details.faq summary { cursor: pointer; font-weight: 700; list-style: none; display: flex; justify-content: space-between; align-items: center; font-size: 1.04rem; }
+    details.faq summary::-webkit-details-marker { display: none; }
+    details.faq summary::after { content: "+"; color: var(--orange); font-size: 1.5rem; font-weight: 400; line-height: 1; transition: transform .3s; }
+    details.faq[open] summary::after { transform: rotate(45deg); }
+    details.faq p { color: var(--muted); margin: 12px 0 0; font-size: .97rem; }
+
+    /* Scroll reveal */
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity .8s ease, transform .8s cubic-bezier(.2,.8,.2,1); }
+    .reveal.in { opacity: 1; transform: none; }
+
+    footer { margin: 120px 0 0; border-top: 1px solid var(--line); padding: 36px 0 46px; color: var(--muted); font-size: .9rem; position: relative; z-index: 2; }
+    .foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .foot nav a { color: var(--muted); text-decoration: none; margin-left: 18px; }
+    .foot nav a:hover { color: var(--text); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+      .reveal { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg" aria-hidden="true">
+    <div class="grid-lines"></div>
+    <div class="orb a"></div>
+    <div class="orb b"></div>
+    <div class="orb c"></div>
+  </div>
+
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#top" id="top" aria-label="Vidonia home">
+        <svg class="mark" width="40" height="40" viewBox="0 0 48 48" aria-hidden="true">
+          <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff2d55"/><stop offset="1" stop-color="#ff7a59"/></linearGradient></defs>
+          <rect width="48" height="48" rx="14" fill="url(#lg)"/>
+          <path d="M19 15 L35 24 L19 33 Z" fill="#fff"/>
+          <circle cx="36" cy="13" r="3" fill="#fff" opacity=".85"/>
+        </svg>
+        <span class="wordmark">Vidonia</span>
+      </a>
+      <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false">☰</button>
+      <ul class="menu" id="menu">
+        <li><a href="#tool" class="active">Enhance</a></li>
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li><a href="#tool" class="cta">Try it free</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <section class="hero">
+      <span class="pill"><span class="dot"></span> Free · No sign-up · Private</span>
+      <h1>Your videos, <span class="grad">clearer</span> than they were.</h1>
+      <p>Blurry TikTok and phone clips? Vidonia cleans compression damage and sharpens detail. Then you see the difference side by side and download the result.</p>
+      <div class="cta-row">
+        <a class="btn primary" href="#tool">Enhance a video →</a>
+        <a class="btn" href="#how">See how it works</a>
+      </div>
+    </section>
+
+    <section class="tool" id="tool">
+      <div class="steps-bar">
+        <div class="sb active" id="sb1"><span class="n">1</span>Upload video</div>
+        <div class="sb" id="sb2"><span class="n">2</span>Choose mode</div>
+        <div class="sb" id="sb3"><span class="n">3</span>Compare & download</div>
+      </div>
+
+      <div id="notice" class="notice" hidden></div>
+
+      <!-- Step 1 -->
+      <div id="dropWrap">
+        <label class="drop" id="drop">
+          <input type="file" id="fileInput" accept="video/*">
+          <div class="orb-ic">⬆</div>
+          <div class="title">Drop your video here, or click to choose</div>
+          <div class="hint">MP4, MOV or WebM · up to 500 MB · 10 minutes max</div>
+          <div class="chips"><span class="chip">TikTok</span><span class="chip">Reels</span><span class="chip">Phone clips</span><span class="chip">Screen recordings</span></div>
+        </label>
+      </div>
+      <div id="vcard" class="vcard" hidden>
+        <img class="thumb" id="thumb" alt="">
+        <div class="vmeta">
+          <div class="name" id="fileName"></div>
+          <div class="info" id="fileMeta"></div>
+        </div>
+        <span class="badge">✓ Ready</span>
+        <button class="ghost" id="changeBtn" type="button">Change video</button>
+      </div>
+
+      <!-- Step 2 -->
+      <div id="step2" hidden>
+        <div class="sec-title"><span class="num">2</span>Choose a mode</div>
+        <p class="sec-sub">Recommended is the safe choice for TikTok. Aggressive pushes harder.</p>
+        <div class="modes">
+          <label class="mode">
+            <input type="radio" name="method" value="recommended" checked>
+            <div class="box">
+              <div class="top">
+                <div class="m-ic">✨</div>
+                <span class="tag">RECOMMENDED</span>
+                <span class="check"></span>
+              </div>
+              <div>
+                <h3>Recommended</h3>
+                <p>Stable, high-quality enhancement that keeps your video's look consistent.</p>
+              </div>
+              <ul>
+                <li>Keeps quality stable after TikTok's compression</li>
+                <li>Smooth processing, no lag</li>
+                <li>Best for everyday uploads</li>
+              </ul>
+            </div>
+          </label>
+          <label class="mode aggr">
+            <input type="radio" name="method" value="aggressive">
+            <div class="box">
+              <div class="top">
+                <div class="m-ic">🔥</div>
+                <span class="tag warn">MAX STRENGTH</span>
+                <span class="check"></span>
+              </div>
+              <div>
+                <h3>Aggressive</h3>
+                <p>Pushes clarity one step further for the biggest visible improvement.</p>
+              </div>
+              <ul>
+                <li>Strongest sharpening and detail recovery</li>
+                <li>Takes longer and may cause lag on long clips</li>
+                <li>Best for blurry or low-quality footage</li>
+              </ul>
+            </div>
+          </label>
+        </div>
+
+        <details class="adv">
+          <summary>Trim (optional)</summary>
+          <div class="fields">
+            <div class="field"><label for="startSec">Start (seconds)</label><input type="number" id="startSec" min="0" step="1" value="0"></div>
+            <div class="field"><label for="endSec">End (seconds)</label><input type="number" id="endSec" min="1" step="1" value="0"></div>
+          </div>
+        </details>
+
+        <button class="start-btn" id="startBtn" type="button"><span>Enhance video</span><span class="arrow">→</span></button>
+
+        <div class="progress-wrap" id="progressWrap">
+          <div class="progress-top"><span id="progressLabel">Preparing…</span><span id="progressPct">0%</span></div>
+          <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+          <div class="status" id="status"></div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="result" id="result">
+        <div class="sec-title"><span class="num">3</span>Before & after</div>
+        <p class="sec-sub">Drag the handle, or click the video to play both at once.</p>
+        <div class="ba" id="ba">
+          <video id="vBefore" playsinline preload="auto" muted></video>
+          <div class="after" id="afterWrap"><video id="vAfter" playsinline preload="auto" muted></video></div>
+          <span class="label l">BEFORE</span>
+          <span class="label r">AFTER</span>
+          <div class="divider" id="divider"></div>
+          <span class="playhint">▶ Play / pause</span>
+        </div>
+        <input type="range" class="slider" id="slider" min="0" max="100" value="50" aria-label="Compare before and after">
+
+        <div class="boost">
+          <div class="ring">
+            <svg viewBox="0 0 96 96">
+              <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0%" stop-color="#ff2d55"/><stop offset="100%" stop-color="#ff7a59"/></linearGradient></defs>
+              <circle class="bgc" cx="48" cy="48" r="40"/>
+              <circle class="fgc" id="ringFg" cx="48" cy="48" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+            </svg>
+            <div class="val" id="ringVal">0%</div>
+          </div>
+          <div>
+            <h3>Clarity improvement</h3>
+            <p>Measured sharpness of a frame from your video, before and after enhancement.</p>
+            <div class="bars">
+              <div class="bar-row"><span>Before</span><div class="bar-track"><div class="bar-fill b" id="barB"></div></div><span id="valB">–</span></div>
+              <div class="bar-row"><span>After</span><div class="bar-track"><div class="bar-fill a" id="barA"></div></div><span id="valA">–</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><div class="k">Mode</div><div class="v" id="statMode">–</div></div>
+          <div class="stat"><div class="k">Size</div><div class="v"><span id="statBefore">–</span> → <span id="statAfter">–</span></div></div>
+          <div class="stat"><div class="k">Processing time</div><div class="v" id="statTime">–</div></div>
+        </div>
+        <a class="dl" id="downloadLink" href="#" download="vidonia-enhanced.mp4">⬇ Download enhanced video</a>
+        <button class="again" id="againBtn" type="button">Enhance another video</button>
+      </div>
+    </section>
+
+    <section class="block reveal" id="how">
+      <div class="eyebrow2">How it works</div>
+      <div class="section-head"><h2>Three steps. Nothing to install.</h2><p>Upload, pick a mode, compare the result and download it.</p></div>
+      <div class="how-grid">
+        <div class="hcard"><div class="big">01</div><h3>Upload</h3><p>Pick a video from your phone or computer. It is sent only to be enhanced.</p></div>
+        <div class="hcard"><div class="big">02</div><h3>Choose a mode</h3><p>Recommended for stable everyday results, or Aggressive for the strongest clarity.</p></div>
+        <div class="hcard"><div class="big">03</div><h3>Compare & download</h3><p>See the before and after side by side, check the clarity gain, then download.</p></div>
+      </div>
+    </section>
+
+    <section class="block reveal" id="features">
+      <div class="eyebrow2">Features</div>
+      <div class="section-head"><h2>Made for the clips you already post.</h2><p>Practical enhancement for social video, not a general editor.</p></div>
+      <div class="feat-grid">
+        <div class="feat"><div class="fi">🧹</div><div><h3>Cleans compression</h3><p>Softens the blocky, grainy look that phone and social apps leave behind.</p></div></div>
+        <div class="feat"><div class="fi">📈</div><div><h3>Measured results</h3><p>See an actual sharpness number for before and after, not just a feeling.</p></div></div>
+        <div class="feat"><div class="fi">⚖️</div><div><h3>Two clear modes</h3><p>Stable Recommended for daily posts, or Aggressive when the footage needs more.</p></div></div>
+        <div class="feat"><div class="fi">🔐</div><div><h3>No sign-up</h3><p>Upload, enhance and download. No account, no forms, no waiting.</p></div></div>
+      </div>
+      <div class="honest">
+        <strong>Honest note:</strong> Vidonia cannot add detail that was never recorded. It removes blur and compression damage, and gives TikTok a cleaner source to compress. TikTok still re-compresses every upload, so very dark or very low-quality footage will improve less.
+      </div>
+    </section>
+
+    <section class="block reveal" id="faq">
+      <div class="eyebrow2">FAQ</div>
+      <div class="section-head"><h2>Questions, answered.</h2></div>
+      <details class="faq"><summary>Is Vidonia free?</summary><p>Yes. Both modes are free to use.</p></details>
+      <details class="faq"><summary>What is the difference between Recommended and Aggressive?</summary><p>Recommended applies a stable, balanced enhancement that keeps your video's look. Aggressive applies stronger sharpening and detail recovery. It takes longer and can cause lag on long clips.</p></details>
+      <details class="faq"><summary>Are my videos stored?</summary><p>Uploads are processed on our server and deleted after processing. Results are removed about an hour after they are created.</p></details>
+      <details class="faq"><summary>Do I need an account?</summary><p>No. Just upload a video, choose a mode and download the result.</p></details>
+      <details class="faq"><summary>Why can the first request be slow?</summary><p>The free server sleeps when unused. The first request can take up to a minute to wake it up.</p></details>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="wrap foot">
+      <span>© <span id="year"></span> Vidonia · AI video enhancer</span>
+      <nav><a href="#tool">Enhance</a><a href="#how">How it works</a><a href="#faq">FAQ</a></nav>
+    </div>
+  </footer>
+
+
+  <script>
+    (() => {
+      const $ = id => document.getElementById(id);
+      const API = 'https://vidonia-server.onrender.com';
+      const MAX_SAFE_BYTES = 300 * 1048576;
+      const HARD_LIMIT_BYTES = 500 * 1048576;
+
+      // ===== Reveal on scroll =====
+      const rio = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); rio.unobserve(e.target); } }), { threshold: .15 });
+      document.querySelectorAll('.reveal').forEach(el => rio.observe(el));
+
+      // ===== Menu =====
+      const burger = $('burger'), menu = $('menu');
+      burger.addEventListener('click', () => {
+        const open = menu.classList.toggle('open');
+        burger.setAttribute('aria-expanded', open);
+        burger.textContent = open ? '✕' : '☰';
+      });
+      menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+        menu.classList.remove('open'); burger.textContent = '☰'; burger.setAttribute('aria-expanded', 'false');
+      }));
+      const links = [...menu.querySelectorAll('a[href^="#"]:not(.cta)')];
+      const sio = new IntersectionObserver(es => es.forEach(e => {
+        if (e.isIntersecting) links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + e.target.id));
+      }), { rootMargin: '-45% 0px -50% 0px' });
+      links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean).forEach(s => sio.observe(s));
+      $('year').textContent = new Date().getFullYear();
+
+      // ===== Helpers =====
+      const state = { file: null, duration: 0, origURL: null, outURL: null, busy: false };
+      // Wait for a media event, but never longer than ms (prevents the page from hanging)
+      function waitEvent(el, evt, ms) {
+        return new Promise(resolve => {
+          let done = false;
+          const finish = ok => {
+            if (done) return; done = true;
+            clearTimeout(timer);
+            el.removeEventListener(evt, onOk);
+            el.removeEventListener('error', onErr);
+            resolve(ok);
+          };
+          const onOk = () => finish(true);
+          const onErr = () => finish(false);
+          const timer = setTimeout(() => finish(false), ms);
+          el.addEventListener(evt, onOk);
+          el.addEventListener('error', onErr);
+        });
+      }
+      const VIDEO_EXT = /\.(mp4|mov|webm|mkv|m4v|avi|3gp)$/i;
+      const sleep = ms => new Promise(r => setTimeout(r, ms));
+      const fmtSize = b => b < 1048576 ? (b / 1024).toFixed(0) + ' KB' : (b / 1048576).toFixed(1) + ' MB';
+      const fmtTime = s => { s = Math.max(0, Math.round(s)); const m = Math.floor(s / 60), r = s % 60; return `${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`; };
+      const fmtSecs = s => { const m = Math.floor(s / 60), r = Math.round(s % 60); return m ? `${m}m ${r}s` : `${r}s`; };
+      function showNotice(text, type = 'ok') {
+        const n = $('notice'); n.textContent = text;
+        n.className = 'notice' + (type === 'warn' ? ' warn' : type === 'error' ? ' error' : '');
+        n.hidden = !text;
+      }
+      function setStatus(text, isError = false) { const s = $('status'); s.textContent = text; s.classList.toggle('error', isError); }
+      function setProgress(pct, label) {
+        const p = Math.max(0, Math.min(100, Math.round(pct)));
+        $('progressBar').style.width = p + '%'; $('progressPct').textContent = p + '%';
+        if (label) $('progressLabel').textContent = label;
+      }
+      function setStep(n) {
+        [1, 2, 3].forEach(i => {
+          const sb = $('sb' + i);
+          sb.classList.toggle('active', i === n); sb.classList.toggle('done', i < n);
+          sb.querySelector('.n').textContent = i < n ? '✓' : String(i);
+        });
+      }
+
+      // ===== Thumbnail =====
+      async function makeThumb(video) {
+        try {
+          if (!video.videoWidth) return '';
+          const t = Math.min(1, (video.duration || 1) / 2);
+          video.currentTime = t;
+          await waitEvent(video, 'seeked', 4000);
+          const c = document.createElement('canvas');
+          const w = 240, h = Math.round(240 * (video.videoHeight / video.videoWidth || 9 / 16));
+          c.width = w; c.height = h;
+          c.getContext('2d').drawImage(video, 0, 0, w, h);
+          return c.toDataURL('image/jpeg', 0.8);
+        } catch (e) { return ''; }
+      }
+
+      // ===== Upload / reset =====
+      function resetAll() {
+        state.file = null;
+        if (state.origURL) URL.revokeObjectURL(state.origURL);
+        if (state.outURL) URL.revokeObjectURL(state.outURL);
+        state.origURL = state.outURL = null;
+        $('fileInput').value = '';
+        $('dropWrap').hidden = false; $('vcard').hidden = true; $('step2').hidden = true;
+        $('progressWrap').style.display = 'none'; $('result').style.display = 'none';
+        $('vBefore').removeAttribute('src'); $('vAfter').removeAttribute('src');
+        showNotice(''); setStatus(''); setStep(1);
+      }
+      async function loadFile(f) {
+        try { await loadFileInner(f); }
+        catch (e) {
+          console.error('Video load error:', e);
+          showNotice('Could not load this video: ' + ((e && e.message) || 'unknown error') + '. Try an MP4 file.', 'error');
+        }
+      }
+
+      async function loadFileInner(f) {
+        if (!f) return;
+        if (!(f.type.startsWith('video/') || VIDEO_EXT.test(f.name))) { showNotice('Please choose a video file.', 'error'); return; }
+        resetAll();
+        state.file = f;
+        state.origURL = URL.createObjectURL(f);
+        // Show the file right away so the user always sees that it was accepted
+        $('fileName').textContent = f.name;
+        $('fileMeta').textContent = 'Reading video…';
+        $('dropWrap').hidden = true;
+        $('vcard').hidden = false;
+        $('step2').hidden = false;
+        setStep(2);
+        const v = $('vBefore');
+        v.src = state.origURL;
+        const previewOk = await waitEvent(v, 'loadedmetadata', 8000);
+        state.duration = previewOk && isFinite(v.duration) && v.duration > 0 ? v.duration : 600;
+        $('fileName').textContent = f.name;
+        $('fileMeta').textContent = previewOk
+          ? `${fmtSize(f.size)} · ${v.videoWidth}×${v.videoHeight} · ${fmtTime(state.duration)}`
+          : `${fmtSize(f.size)} · preview not available in this browser`;
+        $('thumb').src = previewOk ? await makeThumb(v) : '';
+        v.currentTime = 0;
+        $('dropWrap').hidden = true; $('vcard').hidden = false; $('step2').hidden = false;
+        $('startSec').value = 0; $('endSec').value = Math.floor(state.duration) || 0;
+        setStep(2);
+        if (!previewOk) showNotice('This browser cannot preview the video, but it can still be enhanced. Use Trim to set a time range if needed.', 'warn');
+        else if (f.size > HARD_LIMIT_BYTES) showNotice(`This file is ${fmtSize(f.size)}, above the 500 MB limit. Export a smaller copy first.`, 'error');
+        else if (f.size > MAX_SAFE_BYTES || state.duration > 180) showNotice('This is a large or long video. Aggressive mode will take longer. Trim it for faster results.', 'warn');
+      }
+      $('fileInput').addEventListener('change', e => loadFile(e.target.files[0]));
+      const drop = $('drop');
+      ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('dragover'); }));
+      ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('dragover'); }));
+      drop.addEventListener('drop', e => loadFile(e.dataTransfer.files[0]));
+      $('changeBtn').addEventListener('click', resetAll);
+      $('againBtn').addEventListener('click', () => { resetAll(); $('tool').scrollIntoView({ behavior: 'smooth' }); });
+
+      function getTrim() {
+        const start = Math.max(0, parseFloat($('startSec').value) || 0);
+        let end = parseFloat($('endSec').value) || state.duration;
+        if (end > state.duration) end = state.duration;
+        return { start, length: end - start };
+      }
+
+      // ===== Server processing =====
+      // Desktop app: process locally with the bundled ffmpeg (no server, no upload)
+      async function enhanceDesktop(mode, start, length) {
+        setProgress(2, 'Reading video…');
+        const buf = await state.file.arrayBuffer();
+        const off = window.vidoniaDesktop.onProgress(pct => {
+          setProgress(pct, mode === 'aggressive' ? 'Enhancing (aggressive)…' : 'Enhancing…');
+        });
+        try {
+          setProgress(5, mode === 'aggressive' ? 'Enhancing (aggressive)…' : 'Enhancing…');
+          const out = await window.vidoniaDesktop.enhance({ data: buf, name: state.file.name, method: mode, start, length });
+          setProgress(100, 'Done');
+          return new Blob([out], { type: 'video/mp4' });
+        } finally { off(); }
+      }
+
+      async function enhanceOnServer(mode, start, length) {
+        if (window.vidoniaDesktop) return enhanceDesktop(mode, start, length);
+        const form = new FormData();
+        form.append('video', state.file, state.file.name);
+        form.append('method', mode);
+        form.append('start', String(start));
+        form.append('length', String(length));
+        // 1) Check the server first, with a timeout, so a sleeping/offline server gives a clear message
+        setProgress(2, 'Connecting to server…');
+        setStatus('Waking up the server, this can take up to a minute on the first use.');
+        const withTimeout = (ms) => {
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), ms);
+          return { signal: ctrl.signal, done: () => clearTimeout(t) };
+        };
+        const h = withTimeout(90000);
+        try {
+          const hr = await fetch(API + '/api/health', { signal: h.signal, cache: 'no-store' });
+          if (!hr.ok) throw new Error('Server responded with an error (' + hr.status + ').');
+        } catch (e) {
+          throw new Error('Could not reach the Vidonia server. Check your internet connection, or try again in a minute.');
+        } finally { h.done(); }
+
+        // 2) Upload with a long timeout (large files take time)
+        setProgress(5, 'Uploading…');
+        setStatus('');
+        const u = withTimeout(10 * 60 * 1000);
+        let up;
+        try {
+          up = await fetch(API + '/api/enhance', { method: 'POST', body: form, signal: u.signal });
+        } catch (e) {
+          throw new Error('Upload did not finish. The file may be too large for the server, or the connection dropped.');
+        } finally { u.done(); }
+        const upJson = await up.json().catch(() => ({}));
+        if (!up.ok) throw new Error(upJson.error || 'Upload failed.');
+        const id = upJson.id;
+        setStatus('');
+        for (;;) {
+          await sleep(2000);
+          const r = await fetch(`${API}/api/jobs/${id}`);
+          const job = await r.json().catch(() => ({}));
+          if (job.status === 'done') break;
+          if (job.status === 'failed') throw new Error(job.error || 'Processing failed on the server.');
+          if (!r.ok) throw new Error(job.error || 'Lost connection to the server.');
+          setProgress(job.progress || 0, job.status === 'queued' ? 'Waiting in queue…' : (mode === 'aggressive' ? 'Enhancing (aggressive)…' : 'Enhancing…'));
+        }
+        setProgress(100, 'Downloading result…');
+        const dl = await fetch(`${API}/api/jobs/${id}/download`);
+        if (!dl.ok) throw new Error('Could not download the result.');
+        return new Blob([await dl.blob()], { type: 'video/mp4' });
+      }
+
+      $('startBtn').addEventListener('click', async () => {
+        if (!state.file || state.busy) return;
+        const { start, length } = getTrim();
+        if (!(length > 0.5)) { showNotice('End time must be after start time.', 'error'); return; }
+        if (state.file.size > HARD_LIMIT_BYTES) { showNotice('This file is above the 500 MB limit.', 'error'); return; }
+
+        const mode = document.querySelector('input[name="method"]:checked').value;
+        state.busy = true; $('startBtn').disabled = true;
+        $('result').style.display = 'none'; $('progressWrap').style.display = 'block';
+        setProgress(0, 'Preparing…'); setStatus(''); showNotice('');
+        const began = performance.now();
+
+        try {
+          const blob = await enhanceOnServer(mode, start, length);
+          if (state.outURL) URL.revokeObjectURL(state.outURL);
+          state.outURL = URL.createObjectURL(blob);
+          const vb = $('vBefore'), va = $('vAfter');
+          va.src = state.outURL;
+          await waitEvent(va, 'loadedmetadata', 8000);
+          vb.currentTime = start;
+
+          $('statMode').textContent = mode === 'aggressive' ? 'Aggressive' : 'Recommended';
+          $('statBefore').textContent = fmtSize(state.file.size);
+          $('statAfter').textContent = fmtSize(blob.size);
+          $('statTime').textContent = fmtSecs((performance.now() - began) / 1000);
+          $('downloadLink').href = state.outURL;
+
+          $('progressWrap').style.display = 'none';
+          $('result').style.display = 'block';
+          setStep(3);
+          setSplit(50);
+          $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+          // Measure real clarity change on a frame from each video
+          try {
+            const { b, a } = await computeClarity(vb, va, start);
+            $('valB').textContent = b; $('valA').textContent = a;
+            $('barB').style.width = b + '%'; $('barA').style.width = a + '%';
+            const gain = Math.max(0, Math.round(((a - b) / Math.max(b, 1)) * 100));
+            animateRing(Math.min(gain, 100));
+          } catch (e) { console.warn('Clarity measure failed', e); }
+        } catch (err) {
+          console.error('Vidonia processing error:', err);
+          $('progressWrap').style.display = 'block';
+          setProgress(0, 'Failed');
+          setStatus('Error: ' + ((err && err.message) || 'unknown error') + '. Try a shorter trim, or Recommended mode.', true);
+        } finally {
+          state.busy = false; $('startBtn').disabled = false;
+        }
+      });
+
+      // ===== Before / after =====
+      function setSplit(v) {
+        $('afterWrap').style.clipPath = `inset(0 ${100 - v}% 0 0)`;
+        $('divider').style.left = v + '%';
+      }
+      $('slider').addEventListener('input', e => setSplit(+e.target.value));
+      setSplit(50);
+      const vb = $('vBefore'), va = $('vAfter');
+      vb.muted = true; va.muted = true;
+      [[vb, va], [va, vb]].forEach(([a, b]) => {
+        a.addEventListener('play', () => b.play().catch(() => {}));
+        a.addEventListener('pause', () => b.pause());
+        a.addEventListener('seeked', () => { if (Math.abs(a.currentTime - b.currentTime) > 0.1) b.currentTime = a.currentTime; });
+      });
+      $('ba').addEventListener('click', () => { if (vb.paused) vb.play().catch(() => {}); else vb.pause(); });
+
+      // Mode cards: subtle tilt on pointer move
+      document.querySelectorAll('.mode .box').forEach(box => {
+        box.addEventListener('pointermove', e => {
+          const r = box.getBoundingClientRect();
+          const x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+          box.style.transform = `perspective(700px) rotateX(${(-y * 4).toFixed(2)}deg) rotateY(${(x * 4).toFixed(2)}deg) translateY(-4px)`;
+        });
+        box.addEventListener('pointerleave', () => { box.style.transform = ''; });
+      });
+    })();
+  </script>
+</body>
+</html>
