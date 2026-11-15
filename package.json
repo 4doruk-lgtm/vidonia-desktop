@@ -1,0 +1,40 @@
+{
+  "name": "vidonia-desktop",
+  "version": "1.0.0",
+  "description": "Vidonia desktop video enhancer",
+  "main": "main.js",
+  "author": "Vidonia",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis"
+  },
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0"
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.vidonia.app",
+    "productName": "Vidonia",
+    "files": [
+      "main.js",
+      "preload.js",
+      "app/**/*"
+    ],
+    "asarUnpack": [
+      "node_modules/ffmpeg-static/**"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
