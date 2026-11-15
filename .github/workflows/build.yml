@@ -21,6 +21,8 @@ jobs:
 
       - name: Build the Windows installer
         run: npm run dist
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
 
       - name: Upload the .exe
         uses: actions/upload-artifact@v4
