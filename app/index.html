@@ -917,5 +917,26 @@
       });
     })();
   </script>
+
+  <style>
+    .mode.ai input:checked + .box { border-color: #22d3ee; background: rgba(34,211,238,.07); box-shadow: 0 22px 50px -22px rgba(34,211,238,.8); }
+    .mode.ai input:checked + .box .m-ic { background: linear-gradient(135deg, #22d3ee, #8b5cf6); }
+    .mode.ai input:checked + .box .check { background: #22d3ee; border-color: #22d3ee; }
+  </style>
+  <script>
+    // Desktop only: add the AI Upscale option (it needs the local GPU engine)
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!window.vidoniaDesktop) return;
+      const grid = document.querySelector('.modes');
+      if (!grid) return;
+      const label = document.createElement('label');
+      label.className = 'mode ai';
+      label.innerHTML = '<input type="radio" name="method" value="ai">' +
+        '<div class="box"><div class="top"><div class="m-ic">🚀</div><span class="tag new">AI · NVIDIA GPU</span><span class="check"></span></div>' +
+        '<div><h3>AI Upscale</h3><p>Real AI upscaling (2×) with added detail. Uses your graphics card for speed.</p></div>' +
+        '<ul><li>Real new detail, not just sharpening</li><li>Takes a few minutes per clip</li><li>Best for low-resolution videos</li></ul></div>';
+      grid.appendChild(label);
+    });
+  </script>
 </body>
 </html>
