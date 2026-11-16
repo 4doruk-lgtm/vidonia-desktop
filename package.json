@@ -22,7 +22,8 @@
     "files": ["main.js", "preload.js", "app/**/*"],
     "asarUnpack": ["node_modules/ffmpeg-static/**"],
     "extraResources": [
-      { "from": "bin/final", "to": "realesrgan", "filter": ["**/*"] }
+      { "from": "bin/realesrgan", "to": "realesrgan", "filter": ["**/*"] },
+      { "from": "bin/rife", "to": "rife", "filter": ["**/*"] }
     ],
     "win": {
       "target": ["nsis"],
