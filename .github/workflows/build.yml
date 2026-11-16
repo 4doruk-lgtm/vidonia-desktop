@@ -22,6 +22,17 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Download AI engine (Real-ESRGAN, NVIDIA via Vulkan)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path bin | Out-Null
+          Invoke-WebRequest -Uri "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-windows.zip" -OutFile bin/realesrgan.zip
+          Expand-Archive -Path bin/realesrgan.zip -DestinationPath bin/realesrgan -Force
+          $exe = Get-ChildItem -Path bin/realesrgan -Recurse -Filter realesrgan-ncnn-vulkan.exe | Select-Object -First 1
+          New-Item -ItemType Directory -Force -Path bin/final | Out-Null
+          Copy-Item -Path "$($exe.DirectoryName)\*" -Destination bin/final -Recurse -Force
+          Get-ChildItem bin/final
+
       - name: Build the Windows installer
         run: npm run dist
         env:
