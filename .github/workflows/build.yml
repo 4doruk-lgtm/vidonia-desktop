@@ -22,20 +22,29 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Make sure engine folders exist
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path bin/realesrgan | Out-Null
+          New-Item -ItemType Directory -Force -Path bin/rife | Out-Null
+
       - name: Download AI engine (optional)
         continue-on-error: true
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path bin | Out-Null
           Invoke-WebRequest -Uri "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-windows.zip" -OutFile bin/realesrgan.zip
-          Expand-Archive -Path bin/realesrgan.zip -DestinationPath bin/realesrgan -Force
-          $exe = Get-ChildItem -Path bin/realesrgan -Recurse -Filter realesrgan-ncnn-vulkan.exe | Select-Object -First 1
-          New-Item -ItemType Directory -Force -Path bin/final | Out-Null
-          Copy-Item -Path "$($exe.DirectoryName)\*" -Destination bin/final -Recurse -Force
+          Expand-Archive -Path bin/realesrgan.zip -DestinationPath bin/tmp-realesrgan -Force
+          $exe = Get-ChildItem -Path bin/tmp-realesrgan -Recurse -Filter realesrgan-ncnn-vulkan.exe | Select-Object -First 1
+          Copy-Item -Path "$($exe.DirectoryName)\*" -Destination bin/realesrgan -Recurse -Force
 
-      - name: Make sure the engine folder exists
+      - name: Download 120 fps engine (optional)
+        continue-on-error: true
         shell: pwsh
-        run: New-Item -ItemType Directory -Force -Path bin/final | Out-Null
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/nihui/rife-ncnn-vulkan/releases/download/20221029/rife-ncnn-vulkan-20221029-windows.zip" -OutFile bin/rife.zip
+          Expand-Archive -Path bin/rife.zip -DestinationPath bin/tmp-rife -Force
+          $exe = Get-ChildItem -Path bin/tmp-rife -Recurse -Filter rife-ncnn-vulkan.exe | Select-Object -First 1
+          Copy-Item -Path "$($exe.DirectoryName)\*" -Destination bin/rife -Recurse -Force
 
       - name: Build the Windows installer
         shell: pwsh
