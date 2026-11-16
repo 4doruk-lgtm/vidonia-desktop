@@ -21,6 +21,9 @@
     "productName": "Vidonia",
     "files": ["main.js", "preload.js", "app/**/*"],
     "asarUnpack": ["node_modules/ffmpeg-static/**"],
+    "extraResources": [
+      { "from": "bin/final", "to": "realesrgan", "filter": ["**/*"] }
+    ],
     "win": {
       "target": ["nsis"],
       "signAndEditExecutable": false
