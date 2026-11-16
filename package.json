@@ -35,15 +35,6 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
-    },
-    "extraResources": [
-      {
-        "from": "bin/final",
-        "to": "realesrgan",
-        "filter": [
-          "**/*"
-        ]
-      }
-    ]
+    }
   }
 }
