@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win nsis"
+    "dist": "electron-builder --win nsis --publish never"
   },
   "dependencies": {
     "ffmpeg-static": "^5.2.0"
@@ -19,18 +19,11 @@
   "build": {
     "appId": "com.vidonia.app",
     "productName": "Vidonia",
-    "files": [
-      "main.js",
-      "preload.js",
-      "app/**/*"
-    ],
-    "asarUnpack": [
-      "node_modules/ffmpeg-static/**"
-    ],
+    "files": ["main.js", "preload.js", "app/**/*"],
+    "asarUnpack": ["node_modules/ffmpeg-static/**"],
     "win": {
-      "target": [
-        "nsis"
-      ]
+      "target": ["nsis"],
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,
