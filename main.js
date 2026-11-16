@@ -5,9 +5,10 @@ const os = require('os');
 const { spawn } = require('child_process');
 const ffmpegStatic = require('ffmpeg-static');
 
-// AI and 120 fps write thousands of PNG frames to disk, so these modes are limited to short clips
-const MAX_AI_SECONDS = 10;
-const MAX_120_SECONDS = 15;
+// Clips are processed in segments for AI and 120 fps, so disk use stays small (each segment is removed after joining)
+const MAX_TOTAL_SECONDS = 60;
+const SEG_AI_SECONDS = 10;
+const SEG_120_SECONDS = 15;
 
 // Packaged apps keep binaries outside the asar archive
 function unpacked(p) { return app.isPackaged ? p.replace('app.asar', 'app.asar.unpacked') : p; }
@@ -170,33 +171,69 @@ async function interpolate120(input, output, length, sender) {
   }
 }
 
+// One pass over a segment: enhancement, then optional 120 fps
+async function runPipeline(input, out, method, res, fps, start, length, sender) {
+  const mid = out + '.mid.mp4';
+  try {
+    if (method === 'ai') await enhanceAI(input, mid, res, start, length, sender);
+    else await enhanceFilters(input, mid, method, res, start, length, sender);
+    if (fps === '120') await interpolate120(mid, out, length, sender);
+    else fs.renameSync(mid, out);
+  } finally {
+    fs.unlink(mid, () => {});
+  }
+}
+
+// Joins segment files without re-encoding (they all come from the same encoder settings)
+async function joinSegments(files, output) {
+  const list = output + '.list.txt';
+  fs.writeFileSync(list, files.map(f => "file '" + f.replace(/\\/g, '/').replace(/'/g, "'\\''") + "'").join('\n'));
+  try {
+    await runProc(ffmpegBin(), ['-y', '-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', '-movflags', '+faststart', output], { label: 'Joining' });
+  } finally {
+    fs.unlink(list, () => {});
+  }
+}
+
 ipcMain.handle('enhance', async (event, opts) => {
   const { data, name, method, start, length, res = '1080', fps = 'original' } = opts;
   const sender = event.sender;
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const ext = path.extname(name || '').toLowerCase() || '.mp4';
   const input = path.join(os.tmpdir(), `vidonia-${id}-in${ext}`);
-  const mid = path.join(os.tmpdir(), `vidonia-${id}-mid.mp4`);
   const output = path.join(os.tmpdir(), `vidonia-${id}-out.mp4`);
   const len = Math.max(0.5, Number(length) || 0);
   const st = Math.max(0, Number(start) || 0);
 
-  if (method === 'ai' && len > MAX_AI_SECONDS) throw new Error(`AI Upscale works on clips up to ${MAX_AI_SECONDS} seconds. Trim the video first.`);
-  if (fps === '120' && len > MAX_120_SECONDS) throw new Error(`120 fps works on clips up to ${MAX_120_SECONDS} seconds. Trim the video first.`);
+  if (len > MAX_TOTAL_SECONDS) throw new Error(`Please trim the video to ${MAX_TOTAL_SECONDS} seconds or less.`);
   if (method === 'ai' && !fs.existsSync(AI_BIN())) throw new Error('The AI engine is not included in this build.');
   if (fps === '120' && !fs.existsSync(RIFE_BIN())) throw new Error('The 120 fps engine (RIFE) is not included in this build.');
 
+  // Segment length: AI and 120 fps are split so the disk never holds the whole clip as PNG frames
+  let seg = Infinity;
+  if (method === 'ai') seg = Math.min(seg, SEG_AI_SECONDS);
+  if (fps === '120') seg = Math.min(seg, SEG_120_SECONDS);
+  const count = Math.max(1, Math.ceil(len / seg));
+
   fs.writeFileSync(input, Buffer.from(data));
+  const parts = [];
   try {
-    if (method === 'ai') await enhanceAI(input, mid, res, st, len, sender);
-    else await enhanceFilters(input, mid, method, res, st, len, sender);
-
-    if (fps === '120') await interpolate120(mid, output, len, sender);
-    else fs.renameSync(mid, output);
-
+    for (let i = 0; i < count; i++) {
+      const segStart = st + i * (count === 1 ? 0 : seg);
+      const segLen = count === 1 ? len : Math.min(seg, len - i * seg);
+      const part = path.join(os.tmpdir(), `vidonia-${id}-part${i}.mp4`);
+      parts.push(part);
+      const segSender = {
+        send: (channel, pct) => sender.send('progress', Math.round(((i + pct / 100) / count) * 100))
+      };
+      await runPipeline(input, part, method, res, fps, segStart, segLen, segSender);
+    }
+    if (parts.length === 1) fs.renameSync(parts[0], output);
+    else await joinSegments(parts, output);
+    sender.send('progress', 100);
     return fs.readFileSync(output);
   } finally {
-    for (const f of [input, mid, output]) fs.unlink(f, () => {});
+    for (const f of [input, output, ...parts]) fs.unlink(f, () => {});
   }
 });
 
