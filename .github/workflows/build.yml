@@ -23,9 +23,18 @@ jobs:
         run: npm install
 
       - name: Build the Windows installer
-        run: npm run dist
+        shell: pwsh
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
+          DEBUG: "electron-builder"
+        run: |
+          npm run dist 2>&1 | Tee-Object -FilePath build.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Show the real error (only when the build failed)
+        if: failure()
+        shell: pwsh
+        run: Get-Content build.log -Tail 150
 
       - name: Publish to Releases
         uses: softprops/action-gh-release@v2
